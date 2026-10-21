@@ -1,0 +1,1 @@
+ALTER TABLE "subjects" ALTER COLUMN "department_id" SET DATA TYPE integer;
