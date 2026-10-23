@@ -67,11 +67,16 @@ import subjectsRouter from './routes/subjects'
 const app = express();
 const PORT = 8000;
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}))
+const frontendUrl = process.env.FRONTEND_URL;
+if (!frontendUrl) {
+  throw new Error('FRONTEND_URL is not defined');
+}
+
+ app.use(cors({
+  origin: frontendUrl,
+   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+   credentials: true
+ }))
 
 app.use(express.json());
 

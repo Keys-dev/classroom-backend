@@ -8,10 +8,25 @@ const router = express.Router();
 //Get all subjects with optional search, filtering and pagination
 router.get("/", async (req, res) => {
     try {
-        const { search, department, page = 1, limit = 10} = req.query;
-        
-        const currentPage = Math.max(1, +page);
-        const limitPerPage = Math.max(1, +limit)
+       
+        const { search, department, page, limit } = req.query;
+
+        const parsePositiveInt = (value: unknown, fallback: number): number | null => {
+            if (value === undefined) return fallback;
+            if (typeof value !== "string" || value.trim() === "") return null;
+            const n = Number(value);
+            return Number.isInteger(n) && n >= 1 ? n : null;
+        };
+
+        const parsedPage = parsePositiveInt(page, 1);
+        const parsedLimit = parsePositiveInt(limit, 10);
+        if (parsedPage === null || parsedLimit === null) {
+            return res.status(400).json({ error: "page and limit must be positive integers" });
+        }
+
+        const MAX_LIMIT = 100;
+        const currentPage = parsedPage;
+        const limitPerPage = Math.min(parsedLimit, MAX_LIMIT);
 
         const offset = (currentPage - 1) * limitPerPage;
 
@@ -21,22 +36,23 @@ router.get("/", async (req, res) => {
         if (search) {
             filterConditions.push(
                 or(
-                    ilike(subjects.name, `%${search}`),
-                    ilike(subjects.code, `%${search}`)
+                    ilike(subjects.name, `%${search}%`),
+                    ilike(subjects.code, `%${search}%`)
                 )
             );
         }
 
         //If department filter exists, match department name
         if (department) {
-            filterConditions.push(ilike(departments.name, `%${department}`));
+            const deptPattern = `%${String(department).replace(/[%_]/g, '\\$&')}%`;
+            filterConditions.push(ilike(departments.name, deptPattern));
         }
 
         //Combine all filters using AND if any exist
         const whereClause = filterConditions.length > 0 ? and( ...filterConditions) : undefined;
 
         const countResult = await db
-        .select({ count: sql<number>`count(*)`})
+        .select({ count: sql<number>`count(*)::int`})
         .from(subjects)
         .leftJoin(departments, eq(subjects.departmentId, departments.id))
         .where(whereClause);
