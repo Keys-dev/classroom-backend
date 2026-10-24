@@ -63,6 +63,7 @@ import express from 'express'
 import cors from "cors";
 
 import subjectsRouter from './routes/subjects'
+import securityMiddleware from './middleware/security';
 
 const app = express();
 const PORT = 8000;
@@ -79,6 +80,8 @@ if (!frontendUrl) {
  }))
 
 app.use(express.json());
+
+app.use(securityMiddleware)
 
 app.use('/api/subjects', subjectsRouter)
 
