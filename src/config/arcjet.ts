@@ -4,6 +4,11 @@ if (!process.env.ARCJET_ENV && process.env.NODE_ENV !== 'test') {
     throw new Error('ARCJET_ENV env is required');
 }
 
+if (!process.env.ARCJET_KEY && process.env.NODE_ENV !== 'test') {
+    throw new Error('ARCJET_KEY env is required');
+}
+
+
 const aj = arcjet({
   // Get your site key from https://console.arcjet.com and set it as an environment
   // variable rather than hard coding.
@@ -23,13 +28,17 @@ const aj = arcjet({
         "CATEGORY:PREVIEW", // Link previews such as Slack, Discord
       ],
     }),
-    // Create a token bucket rate limit. Other algorithms are supported.
-    slidingWindow({
-        mode: 'LIVE',
-        interval: '2s',
-        max: 1
-    })
-  ],
+
+    detectBot({
+       mode: "LIVE", // Blocks requests. Use "DRY_RUN" to log only
+       // Block all bots except the following
+       allow: [
+         "CATEGORY:SEARCH_ENGINE", // Google, Bing, etc
+         "CATEGORY:PREVIEW", // Link previews such as Slack, Discord
+       ],
+
+    }),
+   ],
 });
 
 export default aj;
