@@ -1,19 +1,33 @@
 import express from "express";
-import {and, desc, eq, getTableColumns, ilike, or, sql} from "drizzle-orm";
-
-import {db} from "../db/index.js";
-import {classes, departments, subjects} from '../db/schema/index.js'
-import { user } from '../db/schema/auth.js'
+import { and, ilike, or, sql, eq, getTableColumns, desc } from "drizzle-orm";
+import { classes, subjects, departments } from "../db/schema/index.js";
+import { user } from "../db/schema/auth.js";
+import { db } from "../db/index.js";
 
 const router = express.Router();
 
 // Get all classes with optional search, filtering and pagination
 router.get("/", async (req, res) => {
     try {
-        const { search, subject, teacher, page = 1, limit = 10 } = req.query;
+       
+        const { search, subject, teacher, page, limit } = req.query;
 
-        const currentPage = Math.max(1, parseInt(String(page), 10) || 1);
-        const limitPerPage = Math.min(Math.max(1, parseInt(String(limit), 10) || 10), 100); // Max 100 records per page
+        const parsePositiveInt = (value: unknown, fallback: number): number | null => {
+            if (value === undefined) return fallback;
+            if (typeof value !== "string" || value.trim() === "") return null;
+            const n = Number(value);
+            return Number.isInteger(n) && n >= 1 ? n : null;
+        };
+
+        const parsedPage = parsePositiveInt(page, 1);
+        const parsedLimit = parsePositiveInt(limit, 10);
+        if (parsedPage === null || parsedLimit === null) {
+            return res.status(400).json({ error: "page and limit must be positive integers" });
+        }
+
+        const MAX_LIMIT = 100;
+        const currentPage = parsedPage;
+        const limitPerPage = Math.min(parsedLimit, MAX_LIMIT);
 
         const offset = (currentPage - 1) * limitPerPage;
 
@@ -45,41 +59,37 @@ router.get("/", async (req, res) => {
         const whereClause = filterConditions.length > 0 ? and(...filterConditions) : undefined;
 
         const countResult = await db
-            .select({ count: sql<number>`count(*)`})
-            .from(classes)
-            .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-            .leftJoin(user, eq(classes.teacherId, user.id))
-            .where(whereClause);
+        .select({ count: sql<number>`count(*)::int`})
+        .from(classes)
+        .leftJoin(subjects, eq(classes.subjectId, subjects.id))
+        .leftJoin(user, eq(classes.teacherId, user.id))
+        .where(whereClause);
 
-        const totalCount = countResult[0]?.count ?? 0;
+        const totalCount = countResult[0] ?.count ?? 0;
 
-        const classesList = await db
-            .select({
-                ...getTableColumns(classes),
-                subject: { ...getTableColumns(subjects) },
-                teacher: { ...getTableColumns(user) }
-            })
-            .from(classes)
-            .leftJoin(subjects, eq(classes.subjectId, subjects.id))
-            .leftJoin(user, eq(classes.teacherId, user.id))
-            .where(whereClause)
-            .orderBy(desc(classes.createdAt))
-            .limit(limitPerPage)
-            .offset(offset);
+        const classesList = await db.select({ ...getTableColumns(classes),
+            subject: { ...getTableColumns(subjects) },
+            teacher: { ...getTableColumns(user) }
+        }).from(classes).leftJoin(subjects, eq(classes.subjectId, subjects.id))
+        .leftJoin(user, eq(classes.teacherId, user.id))
+        .where(whereClause)
+        .orderBy(desc(classes.createdAt))
+        .limit(limitPerPage)
+        .offset(offset);
 
-        res.status(200).json({
-            data: classesList,
-            pagination: {
-                page: currentPage,
-                limit: limitPerPage,
-                total: totalCount,
-                totalPages: Math.ceil(totalCount / limitPerPage),
-            }
-        })
+    res.status(200).json({
+        data: classesList,
+        pagination: {
+            page: currentPage,
+            limit: limitPerPage,
+            total: totalCount,
+            totalPages: Math.ceil(totalCount / limitPerPage),
+        }
+    })
 
     } catch (e) {
         console.error(`GET /classes error: ${e}`);
-        res.status(500).json({ error: 'Failed to get classes' });
+        res.status(500).json({ error: 'Failed to get classes' })
     }
 })
 
