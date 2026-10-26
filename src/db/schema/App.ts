@@ -12,6 +12,7 @@ export const departments = pgTable('departments', {
     code: varchar('code', {length: 50}).notNull().unique(),
     name: varchar('name', {length: 255}).notNull().unique(),
     description: varchar('description', {length: 255}),
+    deletedAt: timestamp('deleted_at'),
     ...timestamps
 })
 
@@ -21,6 +22,7 @@ export const subjects = pgTable('subjects', {
     name: varchar('name', {length: 255}).notNull(),
     code: varchar('code', {length: 50}).notNull().unique(),
     description: varchar('description', {length: 255}),
+    deletedAt: timestamp('deleted_at'),
     ...timestamps
 })
 

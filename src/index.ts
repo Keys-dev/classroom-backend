@@ -7,6 +7,10 @@ import cors from "cors";
 import subjectsRouter from "./routes/subjects.js";
 import usersRouter from "./routes/users.js";
 import classesRouter from "./routes/classes.js";
+import departmentsRouter from "./routes/departments.js";
+import enrollmentsRouter from "./routes/enrollments.js";
+import dashboardRouter from "./routes/dashboard.js";
+import searchRouter from "./routes/search.js";
 import securityMiddleware from "./middleware/security.js";
 import {toNodeHandler} from "better-auth/node";
 import {auth} from "./lib/auth.js";
@@ -29,6 +33,10 @@ app.use(express.json());
 app.use('/api/subjects', subjectsRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/classes', classesRouter)
+app.use('/api/departments', departmentsRouter)
+app.use('/api/enrollments', enrollmentsRouter)
+app.use('/api/dashboard', dashboardRouter)
+app.use('/api/search', searchRouter)
 
 app.use(securityMiddleware);
 

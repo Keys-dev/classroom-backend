@@ -11,6 +11,7 @@ export const user = pgTable("user", {
     image: text("image"),
     role: roleEnum("role").default("student").notNull(),
     imageCldPubId: text("image_cld_pub_id"),
+    deletedAt: timestamp("deleted_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
