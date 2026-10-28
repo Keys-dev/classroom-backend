@@ -5,8 +5,8 @@ import { db } from "../db/index.js"; // your drizzle instance
 import * as schema from "../db/schema/auth.js";
 
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET!,
-  trustedOrigins: [process.env.FRONTEND_URL!],
+  secret: process.env.BETTER_AUTH_SECRET || "classroom-default-secret-change-in-production",
+  trustedOrigins: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : undefined,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

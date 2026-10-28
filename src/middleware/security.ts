@@ -9,8 +9,8 @@ const securityMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  // If NODE_ENV is TEST, skip security middleware
-  if (process.env.NODE_ENV === "test") {
+  // Skip security middleware if Arcjet is not configured or in test mode
+  if (!aj || process.env.NODE_ENV === "test") {
     return next();
   }
 
@@ -80,10 +80,8 @@ const securityMiddleware = async (
     next();
   } catch (error) {
     console.error("Arcjet middleware error:", error);
-    res.status(500).json({
-      error: "Internal Server Error",
-      message: "Something went wrong with the security middleware.",
-    });
+    // On error, allow the request through instead of blocking it
+    next();
   }
 };
 

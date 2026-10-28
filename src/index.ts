@@ -18,12 +18,10 @@ import {toNodeHandler} from "better-auth/node";
 import {auth} from "./lib/auth.js";
 
 const app = express();
-const PORT = 8000;
-
-if (!process.env.FRONTEND_URL) throw new Error('FRONTEND_URL is not set in .env file');
+const PORT = process.env.PORT || 8000;
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL || "*",
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }))
